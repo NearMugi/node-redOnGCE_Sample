@@ -1,0 +1,30 @@
+{
+    "name": "node-red-gce",
+    "version": "0.0.1",
+    "description": "Node-Red running on Google Compute Engine",
+    "homepage": "",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/NearMugi/node-redOnGCE_Sample"
+    },
+    "main": "node_modules/node-red/red/red.js",
+    "scripts": {
+        "start": "node-red -v $FLOWS"
+    },
+    "contributors": [
+        {
+            "name": "Teppei Kuroda"
+        }
+    ],
+    "dependencies": {
+        "node-red": "^1.0.3",
+        "node-red-dashboard": "*",
+        "node-red-node-google": "*",
+        "node-red-contrib-google-cloud": "*",
+        "node-red-contrib-moment": "*"
+    },
+    "engines": {
+        "node": ">=10"
+    }
+}

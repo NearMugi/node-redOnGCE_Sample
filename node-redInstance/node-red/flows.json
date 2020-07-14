@@ -1,0 +1,169 @@
+[
+    {
+        "id": "11060ee2.ffcc41",
+        "type": "tab",
+        "label": "sampleFlow",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "355bb1a2.32885e",
+        "type": "inject",
+        "z": "11060ee2.ffcc41",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 120,
+        "y": 60,
+        "wires": [
+            [
+                "d6572372.68c09"
+            ]
+        ]
+    },
+    {
+        "id": "d6572372.68c09",
+        "type": "debug",
+        "z": "11060ee2.ffcc41",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 330,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "78adf95.b7f5808",
+        "type": "inject",
+        "z": "11060ee2.ffcc41",
+        "name": "",
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 110,
+        "y": 180,
+        "wires": [
+            [
+                "e7f3be31.ffc2f"
+            ]
+        ]
+    },
+    {
+        "id": "57cd174e.5857f8",
+        "type": "debug",
+        "z": "11060ee2.ffcc41",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 550,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "34b853c0.6536bc",
+        "type": "exec",
+        "z": "11060ee2.ffcc41",
+        "command": "python3 /mnt/echo.py",
+        "addpay": true,
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "oldrc": false,
+        "name": "echo.py",
+        "x": 380,
+        "y": 180,
+        "wires": [
+            [
+                "57cd174e.5857f8"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "2f314e53.2786a2",
+        "type": "inject",
+        "z": "11060ee2.ffcc41",
+        "name": "",
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 110,
+        "y": 280,
+        "wires": [
+            [
+                "171815d1.40331a"
+            ]
+        ]
+    },
+    {
+        "id": "171815d1.40331a",
+        "type": "exec",
+        "z": "11060ee2.ffcc41",
+        "command": "bash /mnt/hello.sh",
+        "addpay": true,
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "oldrc": false,
+        "name": "hello.sh",
+        "x": 260,
+        "y": 280,
+        "wires": [
+            [
+                "d08b99d5.41a138"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "d08b99d5.41a138",
+        "type": "debug",
+        "z": "11060ee2.ffcc41",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 430,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "e7f3be31.ffc2f",
+        "type": "function",
+        "z": "11060ee2.ffcc41",
+        "name": "argv",
+        "func": "var msg1 = \"Message1\"\nvar msg2 = \"Message2\"\n\nmsg.payload = msg1\nmsg.payload += ' '\nmsg.payload += msg2\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 250,
+        "y": 180,
+        "wires": [
+            [
+                "34b853c0.6536bc"
+            ]
+        ]
+    }
+]
