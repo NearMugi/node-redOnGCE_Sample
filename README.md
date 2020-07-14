@@ -5,18 +5,17 @@ Semi-automatic Deployment
 
 ## 今回できること
 
-* インスタンスを停止->開始してもNode-REDのフローが消えない  
-* インスタンスの生成がバッチファイル実行で自動的に行える
+* VMインスタンスを停止->開始してもNode-REDのフローが消えない  
+* VMインスタンスの生成がバッチファイル実行で自動的に行える
+* VMインスタンスの起動・停止を管理できる
 
 ## GCEインスタンスの環境  
 
-(修正)  
-(図を追加)
+![flow_1](https://user-images.githubusercontent.com/25577827/87436803-7dd00e00-c628-11ea-9862-8933ee377b39.jpg)
 
-* Dockerで動く
-* フォルダをマウントできる
-* 1880でアクセスできるIPアドレスを指定できる
-* スケジューラーと組み合わせて起動・停止を制御できる
+* Node-REDはVMインスタンスで動くDockerコンテナ内で動いている
+* Node-RED(tcp:1880)にアクセスできるIPアドレスを指定できる
+* スケジューラーと組み合わせて起動・停止を管理できる
 * ローカル環境と同じように、フォルダ内のファイルにアクセスできる
 
 ## 事前準備  
@@ -25,19 +24,52 @@ GCEインスタンスを動かすためにGCPでいくつか設定する
 
 ### GoogleCloudStorage(GCS)  
 
-バケット"gce-node-red"を作成
+VMインスタンスへのアップロード用のバケットを用意する
 
 | 項目                         | 設定                   |
 | ---------------------------- | ---------------------- |
+| バケット名           | gce-node-red                 |
 | ロケーションタイプ           | Region                 |
 | ロケーション                 | asia-northeast1 (東京) |
 | デフォルトのストレージクラス | Standard               |
 
+![GCS](https://user-images.githubusercontent.com/25577827/87437880-cfc56380-c629-11ea-8d41-2b84ce84f9e3.PNG)
+
 ### VPCネットワーク  
 
-(修正)  
+Node-RED(tcp:1880)にアクセスできるようにネットワークを用意する  
 
-Node-REDに1880でアクセスできるようにネットワークを用意する
+* ネットワーク  
+
+| 項目                         | 設定                   |
+| ---------------------------- | ---------------------- |
+| ネットワーク名           | node-red-network                 |
+| サブネット作成モード                 | カスタム サブネット |
+| 動的ルーティング モード | リージョン              |  
+
+![VPC](https://user-images.githubusercontent.com/25577827/87441541-27fe6480-c62e-11ea-8dc8-bf628f4e3590.PNG)
+
+* サブネットワーク  
+
+| 項目                         | 設定                   |
+| ---------------------------- | ---------------------- |
+| サブネットワーク名           | node-red-subnetwork                 |
+| リージョン                 | asia-northeast1 |
+| IP アドレス範囲 | 10.146.0.0/20 ※何でも良いはず              |  
+
+![VPC_2](https://user-images.githubusercontent.com/25577827/87442907-c7702700-c62f-11ea-941e-ad23ca4605d3.PNG)
+
+* ファイアウォール  
+
+| 項目                         | 設定                   |
+| ---------------------------- | ---------------------- |
+| ファイアウォール名           | node-red-firewall                 |
+| ネットワーク                 | node-red-network |
+| ターゲットタグ | node-red-network-tag |  
+| ソースIPの範囲 | 許可したいグローバルIPアドレス              | 
+| 指定したプロトコルとポート | tcpにチェックして1880を指定              | 
+
+![Firewall](https://user-images.githubusercontent.com/25577827/87442984-e1116e80-c62f-11ea-8846-b903710d57c2.PNG)
 
 ### ローカル環境でContainer Registryを認証する  
 
@@ -52,10 +84,7 @@ gcloud auth configure-docker
 ## GCEにインスタンスを生成するまでの手順
 
 大まかな流れは以下の通り  
-
-(修正)  
-(図を追加)
-
+![flow_2](https://user-images.githubusercontent.com/25577827/87437418-444bd280-c629-11ea-99e5-303565b4d751.jpg)
 1. Node-REDフローを用意する
 2. Dockerイメージを作る
 3. GCPのContainerRegistryへアップロードする
@@ -63,12 +92,10 @@ gcloud auth configure-docker
 5. GCPのDeploymentManagerを使ってGCEインスタンスを生成する
 6. GCEインスタンスが起動する
 
-2～6はバッチファイル実行で自動的に行われる。
+**2～6はバッチファイル実行で自動的に行われる**  
 GCEの起動・停止については「[VMインスタンスの起動/停止を管理する](#VMインスタンスの起動/停止を管理する)」に記述している
 
 ### 1. Node-REDフローを用意する  
-
-
 
 | ファイル        | 内容                             |
 | --------------- | -------------------------------- |
@@ -77,8 +104,8 @@ GCEの起動・停止については「[VMインスタンスの起動/停止を�
 | package.json    | フローで使用するパッケージの一覧 |
 | settings.js     | Node-REDの設定                   |
 
-ローカル環境で動作する[enebular editor](https://docs.enebular.com/ja/EnebularEditor/)でフローを作成するのがおすすめ。
-以下のフォルダにflows.json・flows_cred.jsonが保存されている。
+ローカル環境で動作する[enebular editor](https://docs.enebular.com/ja/EnebularEditor/)でフローを作成するのがおすすめ  
+以下のフォルダにflows.json・flows_cred.jsonが保存されている
 
 ```bat
 C:\Users\[USER]\AppData\Local\Programs\enebular-editor\resources\app\node-red
@@ -101,25 +128,34 @@ docker-compose build
 docker tag node-redongce_sample_node-red asia.gcr.io/[PROJECT_ID]/node-red
 docker push asia.gcr.io/[PROJECT_ID]/node-red
 ```
+ContainerRegistryにDockerイメージが追加される  
+![ContainerRegistry](https://user-images.githubusercontent.com/25577827/87438747-e6b88580-c62a-11ea-90a5-e958f5d68acc.PNG)
 
 ## 4. GCSにGCEで使用するファイルをアップロードする
 
 事前準備で作成したバケットにアップロードする。
+![GCS_2](https://user-images.githubusercontent.com/25577827/87440662-2f713e00-c62d-11ea-8369-a24e465f3481.PNG)  
 
 ## 5. GCPのDeploymentManagerを使ってGCEインスタンスを生成する
 
-インスタンスの設定(使用するCPUなど)はyamlファイルにまとめている。  
-/node-redInstance/DeploymentManager内のファイルを参照。  
-例えばCPUやリージョンを変更したい、プリエンティブルインスタンスを無効にしたいなどの場合はこちらを編集する。  
+インスタンスの設定(使用するCPUなど)はyamlファイルにまとめている  
+/node-redInstance/DeploymentManager内のファイルを参照  
+例えばCPUやリージョンを変更したい、プリエンティブルインスタンスを無効にしたいなどの場合はこちらを編集する  
 ※詳細は[gcloud または API を使用してデプロイを作成する](https://cloud.google.com/deployment-manager/docs/deployments?hl=ja)を参照
 
 ``` bat
 gcloud deployment-manager deployments create [DEPLOYMENT_MANAGER_NAME] --config container_vm.yaml
 ```
 
-## GCEにインスタンスを半自動化  
+DeploymentManagerにデプロイ情報が追加される  
+![DeploymentManager](https://user-images.githubusercontent.com/25577827/87438701-d86a6980-c62a-11ea-83cb-2ed171819803.PNG)
 
-VMインスタンスの生成を自動化出来るようにしたファイル群を用意した。
+GCEにVMインスタンスが追加される  
+![GCE](https://user-images.githubusercontent.com/25577827/87438370-642fc600-c62a-11ea-80cc-97199a26cdeb.PNG)
+
+## VMインスタンス生成を自動化  
+
+VMインスタンスの生成を自動化出来るようにしたフォルダを用意した
 
 ### フォルダ構成(Instance)  
 
@@ -134,7 +170,7 @@ VMインスタンスの生成を自動化出来るようにしたファイル群
 
 ### 初期設定  
 
-以下のファイルを修正する  
+GCPのプロジェクトIDに合わせるため、以下のファイルを修正する  
 
 | ファイル                | 修正箇所                                 | 修正内容                        |
 | ----------------------- | ---------------------------------------- | ------------------------------- |
@@ -148,21 +184,25 @@ VMインスタンスの生成を自動化出来るようにしたファイル群
 3. 必要に応じてnode-red/package.json、node-red/Dockerfileを編集する
 4. deploy.batを実行する  
 
-一度初期設定を行えば、この手順でNode-REDのフローを更新できる。
+一度初期設定を行えば、この手順でNode-REDのフローを更新できる
 
-### その他補足事項
+### 補足事項
 
 #### GCSにアップロードしたファイルにアクセスする
 
-GCSにアップロードしたファイルは、"/mnt"フォルダ内に追加されている。  
-フォルダ構成をそのままコピーするので、もしサブフォルダに入れているのであれば"/mnt/サブフォルダ"となる。  
-Node-REDでexecノードを使えばアクセスできる。
+GCSにアップロードしたファイルは、"/mnt"フォルダ内に追加されている  
+フォルダ構成をそのままコピーするので、もしサブフォルダに入れているのであれば"/mnt/サブフォルダ"となる  
+Node-REDでexecノードを使えばアクセスできる
+
+#### Nodeのパッケージをインストールする  
+
+package.jsonにパッケージを記述する
 
 #### Pythonを使う
 
-Dockerfileにパッケージを記述する。  
-**python3は使えるが、pipは入っていないのでpipのインストールから行う。**  
-以下はpandasなどをインストールする例。
+Dockerfileにパッケージを記述する  
+python3は使えるが、pipは入っていないのでpipのインストールから行う  
+以下はpandasなどをインストールする例
 
 ``` dockerfile  
 # install pip
@@ -191,21 +231,17 @@ RUN pip3 install line-bot-sdk
 RUN pip3 install google-api-python-client
 ```
 
-#### Nodeのパッケージをインストールする  
+### 各ファイルの補足
 
-package.jsonにパッケージを記述する。
+#### deploy.bat  
 
-#### 各ファイルの補足
+バッチファイルで以下の処理を行っている
 
-##### deploy.bat  
-
-バッチファイルで以下の処理を行っている。
-
-1. GoogleCloudStorageにデータをアップロードする
+1. GoogleCloudStorageにデータをアップロードする  
 a. 一度データを全て削除
 b. startup.shをアップロード
 c. gsフォルダ内のファイル・フォルダをアップロード
-2. ContainerRegistryにDockerイメージをアップロードする
+2. ContainerRegistryにDockerイメージをアップロードする  
 a. ローカルでDockerイメージを生成  ※このときタグ名が"フォルダ名"_node-redになる
 b. 生成したDockerイメージにContainerRegistryへアップロードする用のタグをつける  
 c. ContainerRegistryへアップロードする  
@@ -213,12 +249,12 @@ c. ContainerRegistryへアップロードする
 a. 前回の設定を削除する  
 b. 今回の設定を追加する  
 
-##### container_vm.py  
+#### container_vm.py  
 
-VMインスタンスの設定を指定する。  
-ファイル構成については[コンテナ最適化デプロイメントを作成する](https://cloud.google.com/deployment-manager/docs/create-container-deployment?hl=ja#python_2)、各項目については[REST Resource: instances](https://cloud.google.com/compute/docs/reference/rest/v1/instances)を参照。  
+VMインスタンスの設定を指定する  
+ファイル構成については[コンテナ最適化デプロイメントを作成する](https://cloud.google.com/deployment-manager/docs/create-container-deployment?hl=ja#python_2)、各項目については[REST Resource: instances](https://cloud.google.com/compute/docs/reference/rest/v1/instances)を参照  
 
-ポイントを抜粋する。
+ポイントを抜粋する
 
 * マシンタイプの指定
 
@@ -258,7 +294,7 @@ VMインスタンスの設定を指定する。
 
 ## VMインスタンスの起動/停止を管理する
 
-[Cloud Scheduler + Cloud Pub/Sub + Cloud Functions でGCEのインスタンスの自動起動or停止させてみた](https://qiita.com/uu4k/items/4075acff6ef6a7ed9384) を参考した。  
+[Cloud Scheduler + Cloud Pub/Sub + Cloud Functions でGCEのインスタンスの自動起動or停止させてみた](https://qiita.com/uu4k/items/4075acff6ef6a7ed9384) を参考した  
 
 * GoogleCloudFunctions(GCF)にGCEインスタンスの起動・停止を指示するプログラムを追加
 * Cloud Schedulerでプログラムを定期的に実行
@@ -277,3 +313,9 @@ scheduleフォルダに入っているバッチファイルを実行する
 
 1. deploy_GCEInstanceTrigger.bat を実行
 2. GCEInstanceTrigger.bat の\[PROJECT_ID]をプロジェクトIDに書き換えて実行  
+
+Cloud SchedulerとGoogleCloudFunctionsにそれぞれ設定(スクリプト)が追加される  
+![Schedule](https://user-images.githubusercontent.com/25577827/87439464-c937eb80-c62b-11ea-8023-a26fb2c6f4a3.PNG)  
+
+![GCF](https://user-images.githubusercontent.com/25577827/87439503-d48b1700-c62b-11ea-89ea-7c3439255652.PNG)  
+
