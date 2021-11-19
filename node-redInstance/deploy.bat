@@ -2,23 +2,23 @@
 cd /d %~dp0
 
 set BUCKET="gce-node-red"
-echo [Delete GoogleStorage File]
+echo +++ [Delete GoogleStorage File]
 call gsutil -m rm gs://%BUCKET%/**
 
-echo [Upload to GoogleStorage]Startup Script
+echo +++ [Upload to GoogleStorage]Startup Script 
 call gsutil cp startupScript/startup.sh gs://%BUCKET%/
 
-echo [Upload to GoogleStorage]Docker(Node-Red) Local File
+echo +++ [Upload to GoogleStorage]Docker(Node-Red) Local File
 for %%f in (gcs\*) do (
   call gsutil cp %%f gs://%BUCKET%/
 )
 
-echo [Upload to GoogleStorage]Docker(Node-Red) Local Folder
+echo +++ [Upload to GoogleStorage]Docker(Node-Red) Local Folder
 for /d %%f in (gcs\*) do (
   call gsutil -m cp -r %%f gs://%BUCKET%/
 )
 
-echo [Upload to ContainerRegistry]
+echo +++ [Upload to ContainerRegistry]
 set PROJECT_ID="[PROJECT_ID]"
 docker-compose build
 rem Tag Name of LocalDockerImage is foldername(Lcase) + "_node-red" 
@@ -31,10 +31,10 @@ docker push asia.gcr.io/%PROJECT_ID%/node-red
 
 set DEPLOYMENT_MANAGER_NAME="node-red-container"
 
-echo [Create GCEInstance] Delete Deployment Manager SettingFile(%DEPLOYMENT_MANAGER_NAME%)
+echo +++ [Create GCEInstance] Delete Deployment Manager SettingFile(%DEPLOYMENT_MANAGER_NAME%)
 echo Y|call gcloud deployment-manager deployments delete %DEPLOYMENT_MANAGER_NAME%
 
-echo [Create GCEInstance] Create Deployment Manager SettingFile(%DEPLOYMENT_MANAGER_NAME%)
+echo +++ [Create GCEInstance] Create Deployment Manager SettingFile(%DEPLOYMENT_MANAGER_NAME%)
 cd DeploymentManager
 call gcloud deployment-manager deployments create %DEPLOYMENT_MANAGER_NAME% --config container_vm.yaml
 

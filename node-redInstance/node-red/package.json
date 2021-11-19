@@ -18,13 +18,13 @@
         }
     ],
     "dependencies": {
-        "node-red": "^1.0.3",
+        "node-red": "*",
         "node-red-dashboard": "*",
         "node-red-node-google": "*",
         "node-red-contrib-google-cloud": "*",
         "node-red-contrib-moment": "*"
     },
     "engines": {
-        "node": ">=10"
+        "node": ">=12"
     }
 }
