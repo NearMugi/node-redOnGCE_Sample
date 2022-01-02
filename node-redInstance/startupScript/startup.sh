@@ -1,7 +1,7 @@
 #! /bin/bash
 
 BASE_FOLDER=/home
-BUCKET=gce-node-red
+BUCKET=gce-node-red-sample
 
 # Baseフォルダが見つかるまで待つ
 echo "Wait until folder($BASE_FOLDER) is found ..."

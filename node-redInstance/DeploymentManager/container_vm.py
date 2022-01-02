@@ -67,7 +67,8 @@ def GenerateConfig(context):
                     "value": context.imports[context.properties["containerManifest"]],
                 },
                 {"key": "google-logging-enabled", "value": "true"},
-                {"key": "startup-script-url", "value": "gs://gce-node-red/startup.sh"},
+                {"key": "startup-script-url",
+                    "value": "gs://gce-node-red-sample/startup.sh"},
             ]
         },
         "disks": [

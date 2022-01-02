@@ -1,8 +1,8 @@
 version: '3.7'
 services:
-  node-red:
-    container_name: node-red-container
-    build: 
+  node-red-sample:
+    container_name: node-red-container-sample
+    build:
       context: .
       dockerfile: ./node-red/Dockerfile
     environment:

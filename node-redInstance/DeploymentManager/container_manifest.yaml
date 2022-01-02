@@ -18,8 +18,8 @@ metadata:
   name: node-red
 spec:
   containers:
-    - name: node-red
-      image: asia.gcr.io/[PROJECT_ID]/node-red
+    - name: node-red-sample
+      image: asia.gcr.io/[PROJECT_ID]/node-red-sample
       imagePullPolicy: Always
       ports:
         - containerPort: 8080
@@ -30,6 +30,6 @@ spec:
   volumes:
     - name: mountRoot
       hostPath:
-        path: /home/gce-node-red       
+        path: /home/gce-node-red-sample       
 
         

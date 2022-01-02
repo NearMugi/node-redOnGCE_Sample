@@ -18,7 +18,7 @@ imports:
 - path: container_vm.py
 
 resources:
-  - name: node-red-instance
+  - name: node-red-instance-sample
     type: container_vm.py
     properties:
         region: asia-northeast1

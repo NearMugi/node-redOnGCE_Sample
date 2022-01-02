@@ -1,7 +1,7 @@
 @echo off
 cd /d %~dp0
 
-set BUCKET="gce-node-red"
+set BUCKET="gce-node-red-sample"
 echo +++ [Delete GoogleStorage File]
 call gsutil -m rm gs://%BUCKET%/**
 
@@ -24,12 +24,12 @@ docker-compose build
 rem Tag Name of LocalDockerImage is foldername(Lcase) + "_node-red" 
 set THIS_PATH=%~dp0
 for %%1 in ("%THIS_PATH:~0,-1%") do set FOLDER_NAME=%%~nx1
-set TAG_NAME=%FOLDER_NAME%_node-red
+set TAG_NAME=%FOLDER_NAME%_node-red-sample
 for %%i in (a b c d e f g h i j k l m n o p q r s t u v w x y z) do call set TAG_NAME=%%TAG_NAME:%%i=%%i%%
-docker tag %TAG_NAME% asia.gcr.io/%PROJECT_ID%/node-red
-docker push asia.gcr.io/%PROJECT_ID%/node-red
+docker tag %TAG_NAME% asia.gcr.io/%PROJECT_ID%/node-red-sample
+docker push asia.gcr.io/%PROJECT_ID%/node-red-sample
 
-set DEPLOYMENT_MANAGER_NAME="node-red-container"
+set DEPLOYMENT_MANAGER_NAME="node-red-container-sample"
 
 echo +++ [Create GCEInstance] Delete Deployment Manager SettingFile(%DEPLOYMENT_MANAGER_NAME%)
 echo Y|call gcloud deployment-manager deployments delete %DEPLOYMENT_MANAGER_NAME%
